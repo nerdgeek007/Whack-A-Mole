@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Whack A Mole!</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Amatic+SC:400,700"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="icon" href="https://fav.farm/🔥" />
+  </head>
+  <body>
+    <h1>Whack-a-mole! <span class="score">0</span></h1>
+    <!-- <button onClick="startGame()">Start!</button> -->
+    <button onClick="noobGame()">Noob</button>
+    <button onClick="proGame()">Pro</button>
+    <div class="game">
+      <div class="hole hole1">
+        <div class="mole"></div>
+      </div>
+      <div class="hole hole2">
+        <div class="mole"></div>
+      </div>
+      <div class="hole hole3">
+        <div class="mole"></div>
+      </div>
+      <div class="hole hole4">
+        <div class="mole"></div>
+      </div>
+      <div class="hole hole5">
+        <div class="mole"></div>
+      </div>
+      <div class="hole hole6">
+        <div class="mole"></div>
+      </div>
+    </div>
+    <div class="hiscore">
+      <h2>
+        Top 5 clickers(on this device)<button onClick="clearScores()">
+          Clear
+        </button>
+      </h2>
+      <table class="scoretable"></table>
+    </div>
+
+    <script>
+      const holes = document.querySelectorAll('.hole');
+      const scoreBoard = document.querySelector('.score');
+      const moles = document.querySelectorAll('.mole');
+      let lastHole;
+      let timeUp = false;
+      let score = 0;
+      //maintaim the scores from local storage
+      const hiscores = JSON.parse(localStorage.getItem('hiscores')) || [];
+      const scoreList = document.querySelector('.scoretable');
+
+      //it generatres the random number between given random time
+      function randomTime(min, max) {
+        return Math.round(Math.random() * (max - min) + min);
+      }
+      //it select a random hole
+      function randomHole(holes) {
+        const idx = Math.floor(Math.random() * holes.length);
+        const hole = holes[idx];
+        //it checks whether the last hole is not same as current hole
+        if (hole === lastHole) {
+          return randomHole(holes);
+        }
+        lastHole = hole;
+        return hole;
+      }
+
+      //it populate the mole slow as compared to pro because time span is large
+      function peepForNoob() {
+        const time = randomTime(200, 1000);
+        const hole = randomHole(holes);
+        hole.classList.add('up');
+        setTimeout(() => {
+          hole.classList.remove('up');
+
+          if (!timeUp) peepForNoob();
+          else checkScore();
+        }, time);
+      }
+
+      function noobGame() {
+        scoreBoard.textContent = 0;
+        timeUp = false;
+        score = 0;
+        peepForNoob();
+        setTimeout(() => (timeUp = true), 10000);
+      }
+      //it populate the mole fast as compared to noob because time span is min
+      function peepForPro() {
+        const time = randomTime(300, 500);
+        const hole = randomHole(holes);
+        hole.classList.add('up');
+        setTimeout(() => {
+          hole.classList.remove('up');
+          if (!timeUp) peepForPro();
+          else checkScore();
+        }, time);
+      }
+
+      function proGame() {
+        scoreBoard.textContent = 0;
+        timeUp = false;
+        score = 0;
+        peepForPro();
+        setTimeout(() => (timeUp = true), 10000);
+      }
+      //count the score when you click the right mole
+      function bonk(e) {
+        if (!e.isTrusted) return; //cheating
+        score++;
+        this.classList.remove('up');
+        scoreBoard.textContent = score;
+      }
+
+      moles.forEach(mole => mole.addEventListener('click', bonk));
+
+      //populate the score in form of table
+      function populateTable() {
+        scoreList.innerHTML = hiscores
+          .map(row => {
+            return `<tr><td>${row.clicker}</td><td>${row.score}</tr>`;
+          })
+          .join('');
+      }
+      //it is checking the score everytime when the time is up
+      function checkScore() {
+        let worstScore = 0;
+        if (hiscores.length > 4) {
+          worstScore = hiscores[hiscores.length - 1].score;
+        }
+
+        if (score > worstScore) {
+          const clicker = window.prompt(
+            `${score} – Top score! What's your name?`
+          );
+          hiscores.push({ score, clicker });
+        }
+
+        hiscores.sort((a, b) => (a.score > b.score ? -1 : 1));
+
+        // Remove the worst score when table too long
+        if (hiscores.length > 5) {
+          hiscores.pop();
+        }
+
+        populateTable();
+        localStorage.setItem('hiscores', JSON.stringify(hiscores));
+      }
+      //it clear out the table data
+      function clearScores() {
+        hiscores.splice(0, hiscores.length);
+        localStorage.setItem('hiscores', JSON.stringify(hiscores));
+        populateTable();
+      }
+      populateTable();
+    </script>
+  </body>
+</html>
